@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>일자리버스 참가 등록</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:#F0F4FA;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.5rem 1rem 3rem;}
+.card{background:#fff;border-radius:20px;padding:1.75rem 1.5rem;width:100%;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,0.10);}
+.top-badge{display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;}
+.badge-icon{width:40px;height:40px;background:#E6F1FB;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.badge-text{font-size:12px;color:#0C447C;font-weight:600;}
+.badge-sub{font-size:11px;color:#888;}
+h1{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px;}
+.subtitle{font-size:13px;color:#888;margin-bottom:1.5rem;}
+.notice{background:#E6F1FB;border-radius:10px;padding:12px 14px;font-size:12px;color:#0C447C;line-height:1.7;margin-bottom:1.5rem;}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.fg label{font-size:14px;font-weight:600;color:#333;}
+.req{color:#C0392B;margin-left:2px;}
+.fg input,.fg select{border:1.5px solid #E0E0DE;border-radius:12px;padding:14px;font-size:16px;font-family:inherit;color:#1A1A18;background:#fff;width:100%;transition:border-color 0.2s;}
+.fg input:focus,.fg select:focus{outline:none;border-color:#185FA5;}
+.hint{font-size:11px;color:#AAA;margin-top:2px;}
+.err{font-size:12px;color:#C0392B;margin-top:4px;display:none;}
+.agree-box{border:1.5px solid #E0E0DE;border-radius:12px;padding:14px;margin-bottom:16px;}
+.agree-title{font-size:14px;font-weight:600;color:#333;margin-bottom:8px;}
+.agree-text{font-size:12px;color:#666;line-height:1.7;background:#F9F9F8;border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+.agree-opts{display:flex;gap:10px;}
+.agree-opt{flex:1;border:1.5px solid #E0E0DE;border-radius:10px;padding:13px;text-align:center;cursor:pointer;font-size:15px;font-weight:500;color:#888;transition:all 0.15s;-webkit-tap-highlight-color:transparent;}
+.yes{border-color:#27A06A;background:#EAF3DE;color:#27500A;}
+.no{border-color:#C0392B;background:#FCEBEB;color:#791F1F;}
+.submit-btn{width:100%;padding:16px;background:#185FA5;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;-webkit-tap-highlight-color:transparent;}
+.submit-btn:active{background:#0C447C;}
+.loading{display:none;text-align:center;padding:2rem;}
+.spinner{width:36px;height:36px;border:3px solid #E0E0DE;border-top-color:#185FA5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.success{display:none;text-align:center;padding:2.5rem 1rem;}
+.success-icon{font-size:60px;margin-bottom:1rem;}
+.success h2{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:8px;}
+.success p{font-size:14px;color:#666;line-height:1.8;}
+.again-btn{margin-top:1.75rem;padding:13px 30px;background:#F0F4FA;border:1.5px solid #DDD;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:#333;}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div id="form-area">
+    <div class="top-badge">
+      <div class="badge-icon">🚌</div>
+      <div><div class="badge-text">충남형 일자리 소통공간</div><div class="badge-sub">찾아가는 일자리버스</div></div>
+    </div>
+    <h1>참가 등록</h1>
+    <p class="subtitle">아래 정보를 입력하고 등록해주세요</p>
+
+    <div class="notice">
+      <strong>개인정보 수집 안내</strong><br>
+      수집 항목: 성명, 연락처, 연령대, 지역<br>
+      수집 목적: 직업교육 정보 제공 및 취업 알선<br>
+      보존 기간: 행사일로부터 1년 / 기관: (재)충남경제진흥원
+    </div>
+
+    <div class="fg">
+      <label>성명 <span class="req">*</span></label>
+      <input id="f-name" type="text" placeholder="홍길동" autocomplete="name">
+      <div class="err" id="err-name">성명을 입력해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>지역 (시·군) <span class="req">*</span></label>
+      <select id="f-region">
+        <option value="">선택해주세요</option>
+        <option>천안시</option><option>아산시</option><option>공주시</option>
+        <option>보령시</option><option>서산시</option><option>논산시</option>
+        <option>계룡시</option><option>당진시</option><option>금산군</option>
+        <option>부여군</option><option>서천군</option><option>청양군</option>
+        <option>홍성군</option><option>예산군</option><option>태안군</option>
+        <option>기타</option>
+      </select>
+      <div class="err" id="err-region">지역을 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>연령대 <span class="req">*</span></label>
+      <select id="f-age">
+        <option value="">선택해주세요</option>
+        <option value="39세 이하">39세 이하</option>
+        <option value="40~59세">40~59세</option>
+        <option value="60세 이상">60세 이상</option>
+      </select>
+      <div class="err" id="err-age">연령대를 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>성별</label>
+      <select id="f-gender">
+        <option value="">선택 안함</option>
+        <option>남성</option><option>여성</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>연락처</label>
+      <input id="f-phone" type="tel" placeholder="010-0000-0000" autocomplete="tel">
+      <div class="hint">선택사항입니다</div>
+    </div>
+
+    <div class="agree-box">
+      <div class="agree-title">개인정보 수집·이용 동의 <span class="req">*</span></div>
+      <div class="agree-text">위 개인정보 수집 및 이용 목적에 동의하십니까?<br>동의를 거부할 수 있으나, 거부 시 서비스 제공이 제한될 수 있습니다.</div>
+      <div class="agree-opts">
+        <div class="agree-opt" id="opt-yes" onclick="setAgree('동의')">✓ 동의합니다</div>
+        <div class="agree-opt" id="opt-no"  onclick="setAgree('부동의')">✕ 동의 안 함</div>
+      </div>
+      <div class="err" id="err-agree" style="margin-top:8px;">동의 여부를 선택해주세요</div>
+    </div>
+
+    <button class="submit-btn" onclick="submit()">등록하기</button>
+  </div>
+
+  <div class="loading" id="loading-area">
+    <div class="spinner"></div>
+    <div style="font-size:14px;color:#888;">등록 중입니다...</div>
+  </div>
+
+  <div class="success" id="success-area">
+    <div class="success-icon">✅</div>
+    <h2>등록 완료!</h2>
+    <p>참가 등록이 완료됐습니다.<br>오늘 프로그램에 잘 오셨습니다 😊</p>
+    <button class="again-btn" onclick="reset()">다시 등록하기</button>
+  </div>
+
+</div>
+<script>
+var SHEET_URL='https://script.google.com/macros/s/AKfycbyRCvW6BKEmyTrK7PnMdkjmHiSdciftgj3EWsfpMUjPfMHdkpa2ngZnaJucZ5tq_73UVA/exec';
+var agreeVal='';
+
+function setAgree(v){
+  agreeVal=v;
+  document.getElementById('opt-yes').className='agree-opt'+(v==='동의'?' yes':'');
+  document.getElementById('opt-no').className='agree-opt'+(v==='부동의'?' no':'');
+  document.getElementById('err-agree').style.display='none';
+}
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+
+function submit(){
+  var name=document.getElementById('f-name').value.trim();
+  var region=document.getElementById('f-region').value;
+  var age=document.getElementById('f-age').value;
+  var ok=true;
+  document.getElementById('err-name').style.display=name?'none':'block'; if(!name)ok=false;
+  document.getElementById('err-region').style.display=region?'none':'block'; if(!region)ok=false;
+  document.getElementById('err-age').style.display=age?'none':'block'; if(!age)ok=false;
+  if(!agreeVal){show('err-agree');ok=false;}
+  if(!ok)return;
+
+  var payload={
+    name:name, region:region, age:age,
+    gender:document.getElementById('f-gender').value,
+    phone:document.getElementById('f-phone').value.trim(),
+    agree:agreeVal, attend:'참여', memo:'셀프등록',
+    hDate:new Date().toLocaleDateString('ko-KR'), hPlace:'', hProg:''
+  };
+
+  hide('form-area'); show('loading-area');
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .finally(function(){hide('loading-area');show('success-area');});
+}
+
+function reset(){
+  ['f-name','f-phone'].forEach(function(i){document.getElementById(i).value='';});
+  ['f-region','f-age','f-gender'].forEach(function(i){document.getElementById(i).value='';});
+  agreeVal='';
+  document.getElementById('opt-yes').className='agree-opt';
+  document.getElementById('opt-no').className='agree-opt';
+  hide('success-area'); show('form-area');
+}
+</script>
+</body>
+</html>
