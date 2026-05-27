@@ -103,6 +103,19 @@ h1{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px;}
       <input id="f-phone" type="text" placeholder="010-0000-0000" inputmode="numeric">
     </div>
 
+    <div class="fg">
+      <label>참여 프로그램 <span class="req">*</span></label>
+      <select id="f-prog">
+        <option value="">선택해주세요</option>
+        <option>워크넷 구인·구직 상담</option>
+        <option>심층컨설팅</option>
+        <option>면접 전략 (이미지메이킹)</option>
+        <option>AI 활용 교육</option>
+        <option>기타</option>
+      </select>
+      <div class="err" id="err-prog">프로그램을 선택해주세요</div>
+    </div>
+
     <div class="agree-box">
       <div class="agree-title">개인정보 수집·이용 동의 <span class="req">*</span></div>
       <div class="agree-text">위 개인정보 수집 및 이용 목적에 동의하십니까?<br>동의를 거부할 수 있으나, 거부 시 서비스 제공이 제한될 수 있습니다.</div>
@@ -160,6 +173,8 @@ function submit(){
   document.getElementById('err-name').style.display=name?'none':'block'; if(!name)ok=false;
   document.getElementById('err-region').style.display=region?'none':'block'; if(!region)ok=false;
   document.getElementById('err-age').style.display=age?'none':'block'; if(!age)ok=false;
+  var prog=document.getElementById('f-prog').value;
+  document.getElementById('err-prog').style.display=prog?'none':'block'; if(!prog)ok=false;
   if(!agreeVal){show('err-agree');ok=false;}
   if(!ok)return;
 
@@ -167,8 +182,8 @@ function submit(){
     name:name, region:region, age:age,
     gender:document.getElementById('f-gender').value,
     phone:document.getElementById('f-phone').value.trim(),
-    agree:agreeVal, attend:'참여', memo:'셀프등록',
-    hDate:new Date().toLocaleDateString('ko-KR'), hPlace:'', hProg:''
+    agree:agreeVal, attend:'대기', memo:'셀프등록',
+    hDate:new Date().toLocaleDateString('ko-KR'), hPlace:'', hProg:document.getElementById('f-prog').value
   };
 
   hide('form-area'); show('loading-area');
@@ -205,7 +220,7 @@ function showClosed(reason){
 
 function reset(){
   ['f-name','f-phone'].forEach(function(i){document.getElementById(i).value='';});
-  ['f-region','f-age','f-gender'].forEach(function(i){document.getElementById(i).value='';});
+  ['f-region','f-age','f-gender','f-prog'].forEach(function(i){document.getElementById(i).value='';}); 
   agreeVal='';
   document.getElementById('opt-yes').className='agree-opt';
   document.getElementById('opt-no').className='agree-opt';
