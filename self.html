@@ -133,6 +133,16 @@ h1{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px;}
 var SHEET_URL='https://script.google.com/macros/s/AKfycbzvb5cKEpLp4V-AA__DbM6fpDfn1GD7dETUfUnSPl3ppGiIxUiYhoaAoST-PpSXd53T/exec';
 var agreeVal='';
 
+// 페이지 로드시 마감 여부 체크
+window.addEventListener('load', function(){
+  fetch(SHEET_URL+'?action=checkStatus')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.closed) showClosed(d.reason);
+    })
+    .catch(function(){});
+});
+
 function setAgree(v){
   agreeVal=v;
   document.getElementById('opt-yes').className='agree-opt'+(v==='동의'?' yes':'');
@@ -162,8 +172,35 @@ function submit(){
   };
 
   hide('form-area'); show('loading-area');
-  fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-    .finally(function(){hide('loading-area');show('success-area');});
+  // 마감 여부 먼저 확인
+  fetch(SHEET_URL+'?action=checkStatus')
+    .then(function(r){return r.json();})
+    .then(function(status){
+      if(status.closed){
+        hide('loading-area');
+        showClosed(status.reason);
+        return;
+      }
+      // 마감 아니면 등록
+      fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .finally(function(){hide('loading-area');show('success-area');});
+    })
+    .catch(function(){
+      // 네트워크 오류시 그냥 등록 시도
+      fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .finally(function(){hide('loading-area');show('success-area');});
+    });
+}
+
+function showClosed(reason){
+  // 마감 화면 표시
+  var area = document.getElementById('form-area');
+  area.innerHTML = '<div style="text-align:center;padding:2rem 1rem;">'
+    + '<div style="font-size:52px;margin-bottom:1rem;">🔒</div>'
+    + '<h2 style="font-size:20px;font-weight:700;color:#1A1A18;margin-bottom:8px;">등록이 마감됐습니다</h2>'
+    + '<p style="font-size:14px;color:#666;line-height:1.7;">' + (reason||'현재 등록을 받지 않고 있습니다.') + '</p>'
+    + '</div>';
+  show('form-area');
 }
 
 function reset(){
