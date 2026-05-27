@@ -106,12 +106,7 @@ h1{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px;}
     <div class="fg">
       <label>참여 프로그램 <span class="req">*</span></label>
       <select id="f-prog">
-        <option value="">선택해주세요</option>
-        <option>워크넷 구인·구직 상담</option>
-        <option>심층컨설팅</option>
-        <option>면접 전략 (이미지메이킹)</option>
-        <option>AI 활용 교육</option>
-        <option>기타</option>
+        <option value="">불러오는 중...</option>
       </select>
       <div class="err" id="err-prog">프로그램을 선택해주세요</div>
     </div>
@@ -151,9 +146,33 @@ window.addEventListener('load', function(){
   fetch(SHEET_URL+'?action=checkStatus')
     .then(function(r){return r.json();})
     .then(function(d){
-      if(d.closed) showClosed(d.reason);
+      if(d.closed){
+        showClosed(d.reason);
+      } else {
+        // 프로그램 목록 동적 세팅
+        var sel = document.getElementById('f-prog');
+        var progs = (d.programs && d.programs.length) ? d.programs : [
+          '워크넷 구인·구직 상담','심층컨설팅',
+          '면접 전략 (이미지메이킹)','AI 활용 교육','기타'
+        ];
+        sel.innerHTML = '<option value="">선택해주세요</option>';
+        progs.forEach(function(p){
+          var opt = document.createElement('option');
+          opt.value = p; opt.textContent = p;
+          sel.appendChild(opt);
+        });
+      }
     })
-    .catch(function(){});
+    .catch(function(){
+      // 네트워크 실패시 기본 목록
+      var sel = document.getElementById('f-prog');
+      sel.innerHTML = '<option value="">선택해주세요</option>'
+        + '<option>워크넷 구인·구직 상담</option>'
+        + '<option>심층컨설팅</option>'
+        + '<option>면접 전략 (이미지메이킹)</option>'
+        + '<option>AI 활용 교육</option>'
+        + '<option>기타</option>';
+    });
 });
 
 function setAgree(v){
