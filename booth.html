@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>축제 부스 참가 등록</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:#F0F4FA;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:1.25rem 1rem 3rem;}
+.card{background:#fff;border-radius:20px;padding:1.5rem 1.5rem;width:100%;max-width:460px;box-shadow:0 4px 24px rgba(0,0,0,0.10);}
+
+/* 상단 카운터 배너 */
+.count-banner{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#185FA5,#0C447C);border-radius:14px;padding:14px 18px;margin-bottom:1.25rem;color:#fff;}
+.count-banner-left{display:flex;align-items:center;gap:10px;}
+.count-icon{width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.count-label{font-size:12px;opacity:.85;}
+.count-prog{font-size:15px;font-weight:700;}
+.count-num{text-align:right;}
+.count-num-big{font-size:28px;font-weight:800;line-height:1;}
+.count-num-unit{font-size:11px;opacity:.85;margin-top:2px;}
+
+h1{font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px;}
+.subtitle{font-size:13px;color:#888;margin-bottom:1.25rem;}
+.notice{background:#E6F1FB;border-radius:10px;padding:12px 14px;font-size:12px;color:#0C447C;line-height:1.7;margin-bottom:1.25rem;}
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.fg label{font-size:15px;font-weight:600;color:#333;}
+.req{color:#C0392B;margin-left:2px;}
+.fg input,.fg select{border:1.5px solid #E0E0DE;border-radius:12px;padding:15px;font-size:16px;font-family:inherit;color:#1A1A18;background:#fff;width:100%;transition:border-color 0.2s;}
+.fg input:focus,.fg select:focus{outline:none;border-color:#185FA5;}
+.err{font-size:12px;color:#C0392B;margin-top:4px;display:none;}
+
+/* 선택형 버튼 그룹 (연령대·성별·지역) - 터치 최적화 */
+.opt-group{display:flex;gap:8px;flex-wrap:wrap;}
+.opt-btn{flex:1;min-width:72px;border:1.5px solid #E0E0DE;border-radius:11px;padding:14px 8px;text-align:center;cursor:pointer;font-size:15px;font-weight:600;color:#666;background:#fff;transition:all 0.12s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.opt-btn.on{border-color:#185FA5;background:#E6F1FB;color:#0C447C;}
+.opt-btn:active{transform:scale(0.97);}
+
+.agree-box{border:1.5px solid #E0E0DE;border-radius:12px;padding:14px;margin-bottom:16px;}
+.agree-title{font-size:15px;font-weight:600;color:#333;margin-bottom:8px;}
+.agree-text{font-size:12px;color:#666;line-height:1.7;background:#F9F9F8;border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+.agree-opts{display:flex;gap:10px;}
+.agree-opt{flex:1;border:1.5px solid #E0E0DE;border-radius:10px;padding:14px;text-align:center;cursor:pointer;font-size:15px;font-weight:500;color:#888;transition:all 0.15s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.yes{border-color:#27A06A;background:#EAF3DE;color:#27500A;}
+.no{border-color:#C0392B;background:#FCEBEB;color:#791F1F;}
+
+.submit-btn{width:100%;padding:18px;background:#185FA5;color:#fff;border:none;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer;font-family:inherit;transition:background 0.15s;-webkit-tap-highlight-color:transparent;}
+.submit-btn:active{background:#0C447C;}
+
+.loading{display:none;text-align:center;padding:2rem;}
+.spinner{width:36px;height:36px;border:3px solid #E0E0DE;border-top-color:#185FA5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 성공 화면 - 빠른 회전용 */
+.success{display:none;text-align:center;padding:2rem 1rem;}
+.success-icon{font-size:64px;margin-bottom:0.75rem;animation:pop 0.4s ease;}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+.success h2{font-size:26px;font-weight:800;color:#1A1A18;margin-bottom:8px;}
+.success p{font-size:15px;color:#666;line-height:1.7;margin-bottom:4px;}
+.success-count{display:inline-block;background:#E6F1FB;color:#0C447C;font-size:14px;font-weight:700;padding:8px 18px;border-radius:999px;margin-top:12px;}
+.countdown{font-size:13px;color:#AAA;margin-top:1.5rem;}
+.again-btn{margin-top:1rem;padding:15px 40px;background:#185FA5;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+.again-btn:active{background:#0C447C;}
+
+/* 부스 설정 표시 */
+.booth-tag{display:inline-block;background:#FEF3C7;color:#92400E;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div id="form-area">
+    <!-- 실시간 대기 카운터 배너 -->
+    <div class="count-banner">
+      <div class="count-banner-left">
+        <div class="count-icon">🎪</div>
+        <div>
+          <div class="count-label">현재 부스</div>
+          <div class="count-prog" id="banner-prog">체험 부스</div>
+        </div>
+      </div>
+      <div class="count-num">
+        <div class="count-num-big" id="banner-count">0</div>
+        <div class="count-num-unit">명 대기 중</div>
+      </div>
+    </div>
+
+    <h1>참가 등록</h1>
+    <p class="subtitle">정보를 입력하고 등록해주세요</p>
+
+    <div class="notice">
+      <strong>개인정보 수집 안내</strong><br>
+      수집 항목: 성명, 연락처, 연령대, 성별, 지역<br>
+      수집 목적: 직업교육 정보 제공 및 취업 알선<br>
+      보존 기간: 행사일로부터 1년 / 기관: (재)충남경제진흥원
+    </div>
+
+    <!-- 프로그램(부스) 선택 - URL로 고정되면 숨김 -->
+    <div class="fg" id="prog-field">
+      <label>참여 프로그램 <span class="req">*</span></label>
+      <select id="f-prog"><option value="">선택해주세요</option></select>
+      <div class="err" id="err-prog">프로그램을 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>성명 <span class="req">*</span></label>
+      <input id="f-name" type="text" placeholder="홍길동" autocomplete="name">
+      <div class="err" id="err-name">성명을 입력해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>지역 (시·군) <span class="req">*</span></label>
+      <select id="f-region">
+        <option value="">선택해주세요</option>
+        <option>천안시</option><option>아산시</option><option>공주시</option>
+        <option>보령시</option><option>서산시</option><option>논산시</option>
+        <option>계룡시</option><option>당진시</option><option>금산군</option>
+        <option>부여군</option><option>서천군</option><option>청양군</option>
+        <option>홍성군</option><option>예산군</option><option>태안군</option>
+        <option>기타</option>
+      </select>
+      <div class="err" id="err-region">지역을 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>연령대 <span class="req">*</span></label>
+      <div class="opt-group" id="age-group">
+        <div class="opt-btn" onclick="setOpt('age','39세 이하',this)">39세 이하</div>
+        <div class="opt-btn" onclick="setOpt('age','40~59세',this)">40~59세</div>
+        <div class="opt-btn" onclick="setOpt('age','60세 이상',this)">60세 이상</div>
+      </div>
+      <div class="err" id="err-age">연령대를 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>성별 <span class="req">*</span></label>
+      <div class="opt-group" id="gender-group">
+        <div class="opt-btn" onclick="setOpt('gender','남성',this)">남성</div>
+        <div class="opt-btn" onclick="setOpt('gender','여성',this)">여성</div>
+      </div>
+      <div class="err" id="err-gender">성별을 선택해주세요</div>
+    </div>
+
+    <div class="fg">
+      <label>연락처</label>
+      <input id="f-phone" type="text" placeholder="010-0000-0000" inputmode="numeric">
+    </div>
+
+    <div class="agree-box">
+      <div class="agree-title">개인정보 수집·이용 동의 <span class="req">*</span></div>
+      <div class="agree-text">위 개인정보 수집 및 이용 목적에 동의하십니까?<br>동의를 거부할 수 있으나, 거부 시 서비스 제공이 제한될 수 있습니다.</div>
+      <div class="agree-opts">
+        <div class="agree-opt" id="opt-yes" onclick="setAgree('동의')">✓ 동의합니다</div>
+        <div class="agree-opt" id="opt-no" onclick="setAgree('부동의')">✕ 동의 안 함</div>
+      </div>
+      <div class="err" id="err-agree" style="margin-top:8px;">동의 여부를 선택해주세요</div>
+    </div>
+
+    <button class="submit-btn" onclick="submit()">등록하기</button>
+  </div>
+
+  <div class="loading" id="loading-area">
+    <div class="spinner"></div>
+    <div style="font-size:14px;color:#888;">등록 중입니다...</div>
+  </div>
+
+  <div class="success" id="success-area">
+    <div class="success-icon">✅</div>
+    <h2>등록 완료!</h2>
+    <p>참가 등록이 완료됐습니다.<br>잠시만 기다려주세요 😊</p>
+    <div class="success-count" id="success-count">앞에 0명 대기 중</div>
+    <div class="countdown" id="countdown">3초 후 다음 등록으로…</div>
+    <button class="again-btn" onclick="reset()">바로 다음 등록</button>
+  </div>
+
+</div>
+<script>
+var SHEET_URL='https://script.google.com/macros/s/AKfycbxW3kihzZCnRNOuzAxMYhKlGFr516D0joL285RyU_cV-yC-YUogdiNdQDmc6Ffni-Jd/exec';
+var agreeVal='';
+var selAge='';
+var selGender='';
+var waitingCount=0;
+var fixedProg=''; // URL로 고정된 프로그램
+var countdownTimer=null;
+var refreshTimer=null;
+
+// URL 파라미터 읽기 (?prog=퍼스널컬러  또는  ?booth=퍼스널컬러)
+function getParam(name){
+  var m=new RegExp('[?&]'+name+'=([^&]*)').exec(window.location.search);
+  return m?decodeURIComponent(m[1].replace(/\+/g,' ')):'';
+}
+
+window.addEventListener('load', function(){
+  // 부스(프로그램) URL 고정 확인
+  fixedProg = getParam('prog') || getParam('booth');
+  if(fixedProg){
+    document.getElementById('prog-field').style.display='none';
+    document.getElementById('banner-prog').textContent = fixedProg;
+  }
+  loadStatus();
+  // 10초마다 대기 인원 자동 갱신
+  refreshTimer=setInterval(refreshCount, 10000);
+});
+
+function loadStatus(){
+  var url = SHEET_URL+'?action=checkStatus';
+  if(fixedProg) url += '&prog='+encodeURIComponent(fixedProg);
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.closed){
+        showClosed(d.reason);
+        return;
+      }
+      if(!fixedProg){
+        var sel = document.getElementById('f-prog');
+        var progs = (d.programs && d.programs.length) ? d.programs : [
+          '퍼스널컬러','면접 컨설팅','취업 타로상담','이력서 및 자소서 컨설팅','기타'
+        ];
+        sel.innerHTML = '<option value="">선택해주세요</option>';
+        progs.forEach(function(p){
+          var opt = document.createElement('option');
+          opt.value = p; opt.textContent = p;
+          sel.appendChild(opt);
+        });
+        // 프로그램 바뀌면 대기 인원 갱신
+        sel.addEventListener('change', refreshCount);
+      }
+      if(typeof d.waiting === 'number'){
+        waitingCount = d.waiting;
+        document.getElementById('banner-count').textContent = d.waiting;
+      }
+    })
+    .catch(function(){
+      if(!fixedProg){
+        var sel = document.getElementById('f-prog');
+        sel.innerHTML = '<option value="">선택해주세요</option>'
+          + '<option>퍼스널컬러</option><option>면접 컨설팅</option>'
+          + '<option>취업 타로상담</option><option>이력서 및 자소서 컨설팅</option>'
+          + '<option>기타</option>';
+      }
+    });
+}
+
+// 대기 인원만 다시 조회
+function refreshCount(){
+  var prog = fixedProg || document.getElementById('f-prog').value;
+  var url = SHEET_URL+'?action=checkStatus';
+  if(prog) url += '&prog='+encodeURIComponent(prog);
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(typeof d.waiting === 'number'){
+        waitingCount = d.waiting;
+        document.getElementById('banner-count').textContent = d.waiting;
+      }
+    })
+    .catch(function(){});
+}
+
+function setOpt(type,val,el){
+  if(type==='age'){selAge=val;document.getElementById('err-age').style.display='none';}
+  if(type==='gender'){selGender=val;document.getElementById('err-gender').style.display='none';}
+  var parent=el.parentElement;
+  parent.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function setAgree(v){
+  agreeVal=v;
+  document.getElementById('opt-yes').className='agree-opt'+(v==='동의'?' yes':'');
+  document.getElementById('opt-no').className='agree-opt'+(v==='부동의'?' no':'');
+  document.getElementById('err-agree').style.display='none';
+}
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+
+function submit(){
+  var name=document.getElementById('f-name').value.trim();
+  var region=document.getElementById('f-region').value;
+  var prog=fixedProg || document.getElementById('f-prog').value;
+  var ok=true;
+
+  document.getElementById('err-name').style.display=name?'none':'block'; if(!name)ok=false;
+  document.getElementById('err-region').style.display=region?'none':'block'; if(!region)ok=false;
+  document.getElementById('err-age').style.display=selAge?'none':'block'; if(!selAge)ok=false;
+  document.getElementById('err-gender').style.display=selGender?'none':'block'; if(!selGender)ok=false;
+  if(!fixedProg){
+    document.getElementById('err-prog').style.display=prog?'none':'block'; if(!prog)ok=false;
+  }
+  if(!agreeVal){show('err-agree');ok=false;}
+  if(!ok)return;
+
+  var payload={
+    name:name, region:region, age:selAge,
+    gender:selGender,
+    phone:document.getElementById('f-phone').value.trim(),
+    agree:agreeVal, attend:'대기', memo:'축제부스',
+    hDate:new Date().toLocaleDateString('ko-KR'), hPlace:'축제부스', hProg:prog
+  };
+
+  hide('form-area'); show('loading-area');
+
+  fetch(SHEET_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+    .finally(function(){
+      hide('loading-area');
+      waitingCount++;
+      document.getElementById('success-count').textContent = '앞에 '+(waitingCount-1)+'명 대기 중';
+      show('success-area');
+      startCountdown();
+    });
+}
+
+function startCountdown(){
+  var sec=3;
+  var cd=document.getElementById('countdown');
+  cd.textContent = sec+'초 후 다음 등록으로…';
+  countdownTimer=setInterval(function(){
+    sec--;
+    if(sec<=0){
+      clearInterval(countdownTimer);
+      reset();
+    } else {
+      cd.textContent = sec+'초 후 다음 등록으로…';
+    }
+  },1000);
+}
+
+function showClosed(reason){
+  var area = document.getElementById('form-area');
+  area.innerHTML = '<div style="text-align:center;padding:2rem 1rem;">'
+    + '<div style="font-size:52px;margin-bottom:1rem;">🔒</div>'
+    + '<h2 style="font-size:20px;font-weight:700;color:#1A1A18;margin-bottom:8px;">등록이 마감됐습니다</h2>'
+    + '<p style="font-size:14px;color:#666;line-height:1.7;">' + (reason||'현재 등록을 받지 않고 있습니다.') + '</p>'
+    + '</div>';
+  show('form-area');
+}
+
+function reset(){
+  if(countdownTimer)clearInterval(countdownTimer);
+  document.getElementById('f-name').value='';
+  document.getElementById('f-phone').value='';
+  document.getElementById('f-region').value='';
+  if(!fixedProg)document.getElementById('f-prog').value='';
+  selAge='';selGender='';agreeVal='';
+  document.querySelectorAll('.opt-btn').forEach(function(b){b.classList.remove('on');});
+  document.getElementById('opt-yes').className='agree-opt';
+  document.getElementById('opt-no').className='agree-opt';
+  document.getElementById('banner-count').textContent = waitingCount;
+  hide('success-area'); show('form-area');
+  refreshCount();
+  setTimeout(function(){document.getElementById('f-name').focus();},100);
+}
+</script>
+</body>
+</html>

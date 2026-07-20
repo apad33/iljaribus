@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>축제 부스 관리자</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;background:#F0F4FA;color:#1A1A18;padding:16px;padding-bottom:60px;}
+.wrap{max-width:820px;margin:0 auto;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.title{font-size:20px;font-weight:800;color:#0C447C;display:flex;align-items:center;gap:8px;}
+.header-btns{display:flex;gap:8px;align-items:center;}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-refresh{background:#185FA5;color:#fff;}
+.btn-refresh:active{background:#0C447C;}
+.btn-close{background:#FCEBEB;color:#C0392B;border:1px solid #F5C4C4;}
+.btn-open{background:#EAF3DE;color:#27500A;border:1px solid #BEDFA0;}
+.auto-badge{font-size:11px;color:#888;}
+
+/* 전체 요약 */
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.sum-card{background:#fff;border-radius:14px;padding:14px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+.sum-label{font-size:12px;color:#888;margin-bottom:4px;}
+.sum-num{font-size:26px;font-weight:800;}
+.sum-wait{color:#B45309;}
+.sum-done{color:#27A06A;}
+.sum-total{color:#185FA5;}
+
+/* 부스별 카드 */
+.booth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+.booth-card{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.booth-card.on{border-color:#185FA5;}
+.booth-card:active{transform:scale(0.98);}
+.booth-name{font-size:14px;font-weight:700;margin-bottom:8px;}
+.booth-stats{display:flex;gap:12px;font-size:12px;}
+.booth-wait{color:#B45309;font-weight:700;}
+.booth-done{color:#27A06A;}
+
+/* 명단 */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.list-title{font-size:16px;font-weight:700;}
+.filter-btns{display:flex;gap:6px;}
+.filter-btn{border:1px solid #DDD;background:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;color:#666;font-family:inherit;}
+.filter-btn.on{background:#185FA5;color:#fff;border-color:#185FA5;}
+
+.tbl-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#F2F0EC;color:#666;font-weight:600;font-size:11px;padding:10px 8px;text-align:left;white-space:nowrap;}
+td{padding:10px 8px;border-top:1px solid #F0F0EE;vertical-align:middle;}
+.status-wait{display:inline-block;background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.status-done{display:inline-block;background:#E8F5E9;color:#1B5E20;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;}
+.act-btn{border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.act-done{background:#185FA5;color:#fff;}
+.act-done:active{background:#0C447C;}
+.act-undo{background:#F0F4FA;color:#666;border:1px solid #DDD;}
+.act-del{background:#FCEBEB;color:#C0392B;border:1px solid #F5C4C4;margin-left:4px;}
+.empty{text-align:center;padding:2.5rem;color:#AAA;font-size:14px;}
+.loading-txt{text-align:center;padding:2rem;color:#888;font-size:14px;}
+.login-box{background:#fff;border-radius:16px;padding:2rem;max-width:360px;margin:4rem auto;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.1);}
+.login-box h2{font-size:20px;margin-bottom:1rem;}
+.login-box input{width:100%;padding:13px;border:1.5px solid #E0E0DE;border-radius:10px;font-size:15px;margin-bottom:12px;font-family:inherit;}
+.login-box button{width:100%;padding:13px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+</style>
+</head>
+<body>
+
+<!-- 간단 비번 (선택) -->
+<div id="login" class="login-box">
+  <h2>🔑 관리자 로그인</h2>
+  <input type="password" id="pw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')doLogin()">
+  <button onclick="doLogin()">입장</button>
+</div>
+
+<div class="wrap" id="app" style="display:none;">
+  <div class="header">
+    <div class="title">🎪 축제 부스 관리자</div>
+    <div class="header-btns">
+      <span class="auto-badge" id="auto-badge">자동 새로고침 ON</span>
+      <button class="btn btn-refresh" onclick="loadAll()">🔄 새로고침</button>
+      <button class="btn btn-close" id="close-btn" onclick="toggleClose()">🔒 등록 마감</button>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="sum-card"><div class="sum-label">대기 중</div><div class="sum-num sum-wait" id="s-wait">0</div></div>
+    <div class="sum-card"><div class="sum-label">완료</div><div class="sum-num sum-done" id="s-done">0</div></div>
+    <div class="sum-card"><div class="sum-label">전체</div><div class="sum-num sum-total" id="s-total">0</div></div>
+  </div>
+
+  <div class="booth-grid" id="booth-grid"></div>
+
+  <div class="list-header">
+    <div class="list-title" id="list-title">전체 명단</div>
+    <div class="filter-btns">
+      <button class="filter-btn on" id="fb-all" onclick="setFilter('')">전체</button>
+      <button class="filter-btn" id="fb-wait" onclick="setFilter('대기')">대기</button>
+      <button class="filter-btn" id="fb-done" onclick="setFilter('완료')">완료</button>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>시각</th><th>성명</th><th>지역</th><th>연령대</th><th>성별</th>
+        <th>연락처</th><th>프로그램</th><th>상태</th><th></th>
+      </tr></thead>
+      <tbody id="list-body"></tbody>
+    </table>
+    <div id="list-empty" class="empty" style="display:none;">명단이 없어요</div>
+    <div id="list-loading" class="loading-txt">불러오는 중...</div>
+  </div>
+</div>
+
+<script>
+var SHEET_URL='https://script.google.com/macros/s/AKfycbxW3kihzZCnRNOuzAxMYhKlGFr516D0joL285RyU_cV-yC-YUogdiNdQDmc6Ffni-Jd/exec';
+var ADMIN_PW='1234'; // 관리자 비밀번호 (원하면 변경)
+var curBooth='';     // 선택된 부스 (빈값=전체)
+var curFilter='';    // 상태 필터
+var isClosed=false;
+var autoTimer=null;
+
+function doLogin(){
+  var pw=document.getElementById('pw').value;
+  if(pw===ADMIN_PW){
+    document.getElementById('login').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadAll();
+    autoTimer=setInterval(loadAll, 15000); // 15초마다 자동 갱신
+  } else {
+    alert('비밀번호가 틀렸어요');
+  }
+}
+
+function loadAll(){
+  loadCounts();
+  loadList();
+  loadStatus();
+}
+
+function loadStatus(){
+  fetch(SHEET_URL+'?action=checkStatus')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      isClosed = d.closed;
+      var btn=document.getElementById('close-btn');
+      if(isClosed){
+        btn.textContent='🔓 등록 재개';
+        btn.className='btn btn-open';
+      } else {
+        btn.textContent='🔒 등록 마감';
+        btn.className='btn btn-close';
+      }
+    }).catch(function(){});
+}
+
+function loadCounts(){
+  fetch(SHEET_URL+'?action=counts')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d.ok)return;
+      document.getElementById('s-wait').textContent=d.totalWaiting;
+      document.getElementById('s-done').textContent=d.totalDone;
+      document.getElementById('s-total').textContent=d.totalWaiting+d.totalDone;
+
+      // 부스별 카드
+      var grid=document.getElementById('booth-grid');
+      var html='<div class="booth-card'+(curBooth===''?' on':'')+'" onclick="selectBooth(\'\')">'
+        +'<div class="booth-name">📋 전체 부스</div>'
+        +'<div class="booth-stats"><span class="booth-wait">대기 '+d.totalWaiting+'</span>'
+        +'<span class="booth-done">완료 '+d.totalDone+'</span></div></div>';
+      Object.keys(d.byProg).forEach(function(prog){
+        var b=d.byProg[prog];
+        html+='<div class="booth-card'+(curBooth===prog?' on':'')+'" onclick="selectBooth(\''+prog.replace(/'/g,"\\'")+'\')">'
+          +'<div class="booth-name">'+prog+'</div>'
+          +'<div class="booth-stats"><span class="booth-wait">대기 '+b.waiting+'</span>'
+          +'<span class="booth-done">완료 '+b.done+'</span></div></div>';
+      });
+      grid.innerHTML=html;
+    }).catch(function(){});
+}
+
+function loadList(){
+  document.getElementById('list-loading').style.display='block';
+  var url=SHEET_URL+'?action=list';
+  if(curBooth) url+='&prog='+encodeURIComponent(curBooth);
+  if(curFilter) url+='&status='+encodeURIComponent(curFilter);
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(d){
+      document.getElementById('list-loading').style.display='none';
+      var body=document.getElementById('list-body');
+      var empty=document.getElementById('list-empty');
+      if(!d.ok||!d.list.length){
+        body.innerHTML='';
+        empty.style.display='block';
+        return;
+      }
+      empty.style.display='none';
+      body.innerHTML=d.list.map(function(p){
+        var statusBadge = p.status==='완료'
+          ? '<span class="status-done">완료 '+(p.doneTime||'')+'</span>'
+          : '<span class="status-wait">대기</span>';
+        var actBtn = p.status==='완료'
+          ? '<button class="act-btn act-undo" onclick="undo('+p.rowIndex+')">되돌리기</button>'
+          : '<button class="act-btn act-done" onclick="complete('+p.rowIndex+')">✓ 완료</button>';
+        return '<tr>'
+          +'<td>'+p.time+'</td>'
+          +'<td style="font-weight:600;">'+p.name+'</td>'
+          +'<td>'+p.region+'</td>'
+          +'<td>'+p.age+'</td>'
+          +'<td>'+(p.gender||'-')+'</td>'
+          +'<td style="font-size:12px;">'+(p.phone||'-')+'</td>'
+          +'<td style="font-size:12px;">'+p.prog+'</td>'
+          +'<td>'+statusBadge+'</td>'
+          +'<td style="white-space:nowrap;">'+actBtn
+          +'<button class="act-btn act-del" onclick="del('+p.rowIndex+')">🗑</button></td>'
+          +'</tr>';
+      }).join('');
+    }).catch(function(){
+      document.getElementById('list-loading').style.display='none';
+    });
+}
+
+function selectBooth(prog){
+  curBooth=prog;
+  document.getElementById('list-title').textContent = prog?(prog+' 명단'):'전체 명단';
+  loadCounts();
+  loadList();
+}
+
+function setFilter(f){
+  curFilter=f;
+  document.getElementById('fb-all').className='filter-btn'+(f===''?' on':'');
+  document.getElementById('fb-wait').className='filter-btn'+(f==='대기'?' on':'');
+  document.getElementById('fb-done').className='filter-btn'+(f==='완료'?' on':'');
+  loadList();
+}
+
+function complete(row){
+  fetch(SHEET_URL+'?action=complete&row='+row)
+    .then(function(r){return r.json();})
+    .finally(function(){loadAll();});
+}
+function undo(row){
+  fetch(SHEET_URL+'?action=reopen&row='+row)
+    .then(function(r){return r.json();})
+    .finally(function(){loadAll();});
+}
+function del(row){
+  if(!confirm('이 참가자를 삭제할까요?'))return;
+  fetch(SHEET_URL+'?action=delete&row='+row)
+    .then(function(r){return r.json();})
+    .finally(function(){loadAll();});
+}
+
+function toggleClose(){
+  var newClosed = !isClosed;
+  var reason='';
+  if(newClosed){
+    reason = prompt('마감 사유를 입력하세요 (참가자에게 표시됩니다)','오늘 등록이 마감되었습니다. 감사합니다!')||'';
+  }
+  var url=SHEET_URL+'?action=setClosed&closed='+(newClosed?'Y':'N')+'&reason='+encodeURIComponent(reason);
+  fetch(url).then(function(r){return r.json();}).finally(function(){loadStatus();});
+}
+</script>
+</body>
+</html>
