@@ -119,6 +119,22 @@ var curBooth='';     // 선택된 부스 (빈값=전체)
 var curFilter='';    // 상태 필터
 var isClosed=false;
 var autoTimer=null;
+var jsonpSeq=0;
+
+// JSONP 호출 (CORS 우회)
+function jsonp(params, cb){
+  var seq='cb_'+(jsonpSeq++)+'_'+Date.now();
+  window[seq]=function(data){
+    cb(data);
+    delete window[seq];
+    if(s.parentNode)s.parentNode.removeChild(s);
+  };
+  var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  var s=document.createElement('script');
+  s.src=SHEET_URL+'?'+q+'&callback='+seq;
+  s.onerror=function(){delete window[seq];if(s.parentNode)s.parentNode.removeChild(s);};
+  document.body.appendChild(s);
+}
 
 function doLogin(){
   var pw=document.getElementById('pw').value;
@@ -139,87 +155,78 @@ function loadAll(){
 }
 
 function loadStatus(){
-  fetch(SHEET_URL+'?action=checkStatus')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      isClosed = d.closed;
-      var btn=document.getElementById('close-btn');
-      if(isClosed){
-        btn.textContent='🔓 등록 재개';
-        btn.className='btn btn-open';
-      } else {
-        btn.textContent='🔒 등록 마감';
-        btn.className='btn btn-close';
-      }
-    }).catch(function(){});
+  jsonp({action:'checkStatus'}, function(d){
+    isClosed = d.closed;
+    var btn=document.getElementById('close-btn');
+    if(isClosed){
+      btn.textContent='🔓 등록 재개';
+      btn.className='btn btn-open';
+    } else {
+      btn.textContent='🔒 등록 마감';
+      btn.className='btn btn-close';
+    }
+  });
 }
 
 function loadCounts(){
-  fetch(SHEET_URL+'?action=counts')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(!d.ok)return;
-      document.getElementById('s-wait').textContent=d.totalWaiting;
-      document.getElementById('s-done').textContent=d.totalDone;
-      document.getElementById('s-total').textContent=d.totalWaiting+d.totalDone;
+  jsonp({action:'counts'}, function(d){
+    if(!d.ok)return;
+    document.getElementById('s-wait').textContent=d.totalWaiting;
+    document.getElementById('s-done').textContent=d.totalDone;
+    document.getElementById('s-total').textContent=d.totalWaiting+d.totalDone;
 
-      // 부스별 카드
-      var grid=document.getElementById('booth-grid');
-      var html='<div class="booth-card'+(curBooth===''?' on':'')+'" onclick="selectBooth(\'\')">'
-        +'<div class="booth-name">📋 전체 부스</div>'
-        +'<div class="booth-stats"><span class="booth-wait">대기 '+d.totalWaiting+'</span>'
-        +'<span class="booth-done">완료 '+d.totalDone+'</span></div></div>';
-      Object.keys(d.byProg).forEach(function(prog){
-        var b=d.byProg[prog];
-        html+='<div class="booth-card'+(curBooth===prog?' on':'')+'" onclick="selectBooth(\''+prog.replace(/'/g,"\\'")+'\')">'
-          +'<div class="booth-name">'+prog+'</div>'
-          +'<div class="booth-stats"><span class="booth-wait">대기 '+b.waiting+'</span>'
-          +'<span class="booth-done">완료 '+b.done+'</span></div></div>';
-      });
-      grid.innerHTML=html;
-    }).catch(function(){});
+    var grid=document.getElementById('booth-grid');
+    var html='<div class="booth-card'+(curBooth===''?' on':'')+'" onclick="selectBooth(\'\')">'
+      +'<div class="booth-name">📋 전체 부스</div>'
+      +'<div class="booth-stats"><span class="booth-wait">대기 '+d.totalWaiting+'</span>'
+      +'<span class="booth-done">완료 '+d.totalDone+'</span></div></div>';
+    Object.keys(d.byProg).forEach(function(prog){
+      var b=d.byProg[prog];
+      html+='<div class="booth-card'+(curBooth===prog?' on':'')+'" onclick="selectBooth(\''+prog.replace(/'/g,"\\'")+'\')">'
+        +'<div class="booth-name">'+prog+'</div>'
+        +'<div class="booth-stats"><span class="booth-wait">대기 '+b.waiting+'</span>'
+        +'<span class="booth-done">완료 '+b.done+'</span></div></div>';
+    });
+    grid.innerHTML=html;
+  });
 }
 
 function loadList(){
   document.getElementById('list-loading').style.display='block';
-  var url=SHEET_URL+'?action=list';
-  if(curBooth) url+='&prog='+encodeURIComponent(curBooth);
-  if(curFilter) url+='&status='+encodeURIComponent(curFilter);
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
-      document.getElementById('list-loading').style.display='none';
-      var body=document.getElementById('list-body');
-      var empty=document.getElementById('list-empty');
-      if(!d.ok||!d.list.length){
-        body.innerHTML='';
-        empty.style.display='block';
-        return;
-      }
-      empty.style.display='none';
-      body.innerHTML=d.list.map(function(p){
-        var statusBadge = p.status==='완료'
-          ? '<span class="status-done">완료 '+(p.doneTime||'')+'</span>'
-          : '<span class="status-wait">대기</span>';
-        var actBtn = p.status==='완료'
-          ? '<button class="act-btn act-undo" onclick="undo('+p.rowIndex+')">되돌리기</button>'
-          : '<button class="act-btn act-done" onclick="complete('+p.rowIndex+')">✓ 완료</button>';
-        return '<tr>'
-          +'<td>'+p.time+'</td>'
-          +'<td style="font-weight:600;">'+p.name+'</td>'
-          +'<td>'+p.region+'</td>'
-          +'<td>'+p.age+'</td>'
-          +'<td>'+(p.gender||'-')+'</td>'
-          +'<td style="font-size:12px;">'+(p.phone||'-')+'</td>'
-          +'<td style="font-size:12px;">'+p.prog+'</td>'
-          +'<td>'+statusBadge+'</td>'
-          +'<td style="white-space:nowrap;">'+actBtn
-          +'<button class="act-btn act-del" onclick="del('+p.rowIndex+')">🗑</button></td>'
-          +'</tr>';
-      }).join('');
-    }).catch(function(){
-      document.getElementById('list-loading').style.display='none';
-    });
+  var params={action:'list'};
+  if(curBooth) params.prog=curBooth;
+  if(curFilter) params.status=curFilter;
+  jsonp(params, function(d){
+    document.getElementById('list-loading').style.display='none';
+    var body=document.getElementById('list-body');
+    var empty=document.getElementById('list-empty');
+    if(!d.ok||!d.list.length){
+      body.innerHTML='';
+      empty.style.display='block';
+      return;
+    }
+    empty.style.display='none';
+    body.innerHTML=d.list.map(function(p){
+      var statusBadge = p.status==='완료'
+        ? '<span class="status-done">완료 '+(p.doneTime||'')+'</span>'
+        : '<span class="status-wait">대기</span>';
+      var actBtn = p.status==='완료'
+        ? '<button class="act-btn act-undo" onclick="undo('+p.rowIndex+')">되돌리기</button>'
+        : '<button class="act-btn act-done" onclick="complete('+p.rowIndex+')">✓ 완료</button>';
+      return '<tr>'
+        +'<td>'+p.time+'</td>'
+        +'<td style="font-weight:600;">'+p.name+'</td>'
+        +'<td>'+p.region+'</td>'
+        +'<td>'+p.age+'</td>'
+        +'<td>'+(p.gender||'-')+'</td>'
+        +'<td style="font-size:12px;">'+(p.phone||'-')+'</td>'
+        +'<td style="font-size:12px;">'+p.prog+'</td>'
+        +'<td>'+statusBadge+'</td>'
+        +'<td style="white-space:nowrap;">'+actBtn
+        +'<button class="act-btn act-del" onclick="del('+p.rowIndex+')">🗑</button></td>'
+        +'</tr>';
+    }).join('');
+  });
 }
 
 function selectBooth(prog){
@@ -238,20 +245,14 @@ function setFilter(f){
 }
 
 function complete(row){
-  fetch(SHEET_URL+'?action=complete&row='+row)
-    .then(function(r){return r.json();})
-    .finally(function(){loadAll();});
+  jsonp({action:'complete',row:row}, function(){loadAll();});
 }
 function undo(row){
-  fetch(SHEET_URL+'?action=reopen&row='+row)
-    .then(function(r){return r.json();})
-    .finally(function(){loadAll();});
+  jsonp({action:'reopen',row:row}, function(){loadAll();});
 }
 function del(row){
   if(!confirm('이 참가자를 삭제할까요?'))return;
-  fetch(SHEET_URL+'?action=delete&row='+row)
-    .then(function(r){return r.json();})
-    .finally(function(){loadAll();});
+  jsonp({action:'delete',row:row}, function(){loadAll();});
 }
 
 function toggleClose(){
@@ -260,8 +261,7 @@ function toggleClose(){
   if(newClosed){
     reason = prompt('마감 사유를 입력하세요 (참가자에게 표시됩니다)','오늘 등록이 마감되었습니다. 감사합니다!')||'';
   }
-  var url=SHEET_URL+'?action=setClosed&closed='+(newClosed?'Y':'N')+'&reason='+encodeURIComponent(reason);
-  fetch(url).then(function(r){return r.json();}).finally(function(){loadStatus();});
+  jsonp({action:'setClosed',closed:(newClosed?'Y':'N'),reason:reason}, function(){loadStatus();});
 }
 </script>
 </body>

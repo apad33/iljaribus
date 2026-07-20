@@ -182,6 +182,22 @@ var waitingCount=0;
 var fixedProg=''; // URL로 고정된 프로그램
 var countdownTimer=null;
 var refreshTimer=null;
+var jsonpSeq=0;
+
+// JSONP 호출 (CORS 우회)
+function jsonp(params, cb){
+  var seq='cb_'+(jsonpSeq++)+'_'+Date.now();
+  window[seq]=function(data){
+    cb(data);
+    delete window[seq];
+    if(s.parentNode)s.parentNode.removeChild(s);
+  };
+  var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  var s=document.createElement('script');
+  s.src=SHEET_URL+'?'+q+'&callback='+seq;
+  s.onerror=function(){delete window[seq];if(s.parentNode)s.parentNode.removeChild(s);};
+  document.body.appendChild(s);
+}
 
 // URL 파라미터 읽기 (?prog=퍼스널컬러  또는  ?booth=퍼스널컬러)
 function getParam(name){
@@ -190,71 +206,54 @@ function getParam(name){
 }
 
 window.addEventListener('load', function(){
-  // 부스(프로그램) URL 고정 확인
   fixedProg = getParam('prog') || getParam('booth');
   if(fixedProg){
     document.getElementById('prog-field').style.display='none';
     document.getElementById('banner-prog').textContent = fixedProg;
   }
   loadStatus();
-  // 10초마다 대기 인원 자동 갱신
   refreshTimer=setInterval(refreshCount, 10000);
 });
 
 function loadStatus(){
-  var url = SHEET_URL+'?action=checkStatus';
-  if(fixedProg) url += '&prog='+encodeURIComponent(fixedProg);
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.closed){
-        showClosed(d.reason);
-        return;
-      }
-      if(!fixedProg){
-        var sel = document.getElementById('f-prog');
-        var progs = (d.programs && d.programs.length) ? d.programs : [
-          '퍼스널컬러','면접 컨설팅','취업 타로상담','이력서 및 자소서 컨설팅','기타'
-        ];
-        sel.innerHTML = '<option value="">선택해주세요</option>';
-        progs.forEach(function(p){
-          var opt = document.createElement('option');
-          opt.value = p; opt.textContent = p;
-          sel.appendChild(opt);
-        });
-        // 프로그램 바뀌면 대기 인원 갱신
-        sel.addEventListener('change', refreshCount);
-      }
-      if(typeof d.waiting === 'number'){
-        waitingCount = d.waiting;
-        document.getElementById('banner-count').textContent = d.waiting;
-      }
-    })
-    .catch(function(){
-      if(!fixedProg){
-        var sel = document.getElementById('f-prog');
-        sel.innerHTML = '<option value="">선택해주세요</option>'
-          + '<option>퍼스널컬러</option><option>면접 컨설팅</option>'
-          + '<option>취업 타로상담</option><option>이력서 및 자소서 컨설팅</option>'
-          + '<option>기타</option>';
-      }
-    });
+  var params={action:'checkStatus'};
+  if(fixedProg) params.prog=fixedProg;
+  jsonp(params, function(d){
+    if(d.closed){
+      showClosed(d.reason);
+      return;
+    }
+    if(!fixedProg){
+      var sel = document.getElementById('f-prog');
+      var progs = (d.programs && d.programs.length) ? d.programs : [
+        '퍼스널컬러','면접 컨설팅','취업 타로상담','이력서 및 자소서 컨설팅','기타'
+      ];
+      sel.innerHTML = '<option value="">선택해주세요</option>';
+      progs.forEach(function(p){
+        var opt = document.createElement('option');
+        opt.value = p; opt.textContent = p;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', refreshCount);
+    }
+    if(typeof d.waiting === 'number'){
+      waitingCount = d.waiting;
+      document.getElementById('banner-count').textContent = d.waiting;
+    }
+  });
 }
 
 // 대기 인원만 다시 조회
 function refreshCount(){
   var prog = fixedProg || document.getElementById('f-prog').value;
-  var url = SHEET_URL+'?action=checkStatus';
-  if(prog) url += '&prog='+encodeURIComponent(prog);
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(typeof d.waiting === 'number'){
-        waitingCount = d.waiting;
-        document.getElementById('banner-count').textContent = d.waiting;
-      }
-    })
-    .catch(function(){});
+  var params={action:'checkStatus'};
+  if(prog) params.prog=prog;
+  jsonp(params, function(d){
+    if(typeof d.waiting === 'number'){
+      waitingCount = d.waiting;
+      document.getElementById('banner-count').textContent = d.waiting;
+    }
+  });
 }
 
 function setOpt(type,val,el){
